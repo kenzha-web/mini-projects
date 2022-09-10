@@ -1,32 +1,55 @@
-// const posts = [
-//     {
-//         title: 'Heading post',
-//         content: 'Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ducimus esse modi placeat error odio quis harum, minima nobis. Nihil, ea.'
-//     },
-//     {
-//         title: 'Heading post',
-//         content: 'Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ducimus esse modi placeat error odio quis harum, minima nobis. Nihil, ea.'
-//     },
-//     {
-//         title: 'Heading post',
-//         content: 'Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ducimus esse modi placeat error odio quis harum, minima nobis. Nihil, ea.'
-//     },
-// ]
+const textArea = document.querySelector('#text')
+let voiceList = document.querySelector('#voice')
+let speechBtn = document.querySelector('.submit')
 
-const getArticleElement = ({title, body}) => `<article><h2>${title}</h2><div><p>${body}</p></div></article>`
- 
-async function fetchPosts() {
-    try {
-        const response = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=3')
-        const posts = await response.json()
-        const articleSection = document.querySelector('section')
-        articleSection.innerHTML = posts
-            .map(post => getArticleElement(post))
-            .join(' ')
-    } catch (error) { 
-        alert('Error fetch', error) 
+let synth = speechSynthesis
+let isSpeaking = true
+
+const voiceSpeech = () => {
+    for(let voice of synth.getVoices()) {
+        let option = document.createElement('option')
+        option.text = voice.name
+        voiceList.add(option)
+        console.log(option)
     }
 }
 
-fetchPosts()
+synth.addEventListener('voicesChanged', voiceSpeech)
 
+const textToSpeech = () => {
+    let utterance = new SpeechSynthesisUtterance(text)
+    for(let voice of synth.getVoices()){
+        if(voice.name === voice.value){
+            utterance.voice = voice
+        }
+    }
+    speechSynthesis.speak(utterance)
+}
+
+speechBtn.addEventListener('click', (e) => {
+    e.preventDefault()
+    if(textArea != ''){
+        if(!synth.speaking){
+            textToSpeech(textArea.value)
+        }
+        if(textArea.value.length > 80) {
+            if(isSpeaking){
+                synth.resume()
+                isSpeaking = false
+                speechBtn.innerHTML = 'Pause Speech'
+            } else {
+                synth.pause()
+                isSpeaking = true 
+                speechBtn.innerHTML = 'Resume Speech'
+            }
+            setInterval(() => {
+                if(!synth.speaking && !isSpeaking) {
+                    isSpeaking = true
+                    speechBtn.innerHTML = 'Convert To Speech'
+                }
+            })
+        } else {
+            speechBtn.innerHTML = 'Convert To Speech'
+        }
+    }
+})
